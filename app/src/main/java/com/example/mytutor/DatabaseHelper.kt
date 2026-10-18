@@ -10,7 +10,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "MyTutor.db"
-        private const val DATABASE_VERSION = 10 // Incremented to 10 to ensure location column is added for all users
+        private const val DATABASE_VERSION = 12 // Incremented to 12 to update email domains to gmail/outlook/yahoo
 
         // User table
         const val TABLE_USERS = "users"
@@ -57,55 +57,122 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db?.execSQL(createUserTable)
         db?.execSQL(createBookingTable)
 
+        seedInitialData(db)
+    }
+
+    private fun seedInitialData(db: SQLiteDatabase?) {
         preloadAdmin(db)
         preloadTutors(db)
         preloadStudents(db)
+        preloadPendingUsers(db)
+        preloadBookings(db)
     }
 
     private fun preloadAdmin(db: SQLiteDatabase?) {
-        val values = ContentValues()
-        values.put(COLUMN_FULL_NAME, "Admin User")
-        values.put(COLUMN_EMAIL, "admin@mytutor.com")
-        values.put(COLUMN_PASSWORD, "admin123")
-        values.put(COLUMN_ROLE, "Admin")
-        values.put(COLUMN_STATUS, "Approved")
-        db?.insert(TABLE_USERS, null, values)
+        insertUserIfNotExists(db, "Admin User", "admin@gmail.com", "admin123", "Admin", "System Administrator", "Approved", "Cape Town")
     }
 
     private fun preloadTutors(db: SQLiteDatabase?) {
         val tutors = arrayOf(
-            arrayOf("John Smith", "john@tutor.com", "password123", "Tutor", "Expert in Advanced Mathematics with 10 years of experience.", "Cape Town"),
-            arrayOf("Sarah Jenkins", "sarah@tutor.com", "password123", "Tutor", "Specializes in Organic Chemistry and Biology.", "Johannesburg"),
-            arrayOf("Michael Chen", "michael@tutor.com", "password123", "Tutor", "Native English speaker focused on Literature and Grammar.", "Durban"),
-            arrayOf("Emily Davis", "emily@tutor.com", "password123", "Tutor", "Physics PhD with a passion for teaching high school students.", "Online")
+            arrayOf("Dr. John Smith", "johnsmith@gmail.com", "password123", "Tutor", "Expert in Advanced Mathematics with 10 years of experience.", "Cape Town"),
+            arrayOf("Prof. Sarah Jenkins", "sarahjenkins@outlook.com", "password123", "Tutor", "Specializes in Organic Chemistry, Biology and Science.", "Johannesburg"),
+            arrayOf("Michael Chen", "michaelchen@yahoo.com", "password123", "Tutor", "Native English speaker focused on Literature, Grammar and Writing.", "Durban"),
+            arrayOf("Dr. Emily Davis", "emilydavis@gmail.com", "password123", "Tutor", "Physics PhD with a passion for teaching high school Science students.", "Online"),
+            arrayOf("David Ndlovu", "davidndlovu@outlook.com", "password123", "Tutor", "Software Engineer teaching Programming, Data Structures and Computer Science.", "Cape Town"),
+            arrayOf("Amanda Naidoo", "amandanaidoo@yahoo.com", "password123", "Tutor", "Experienced History educator specializing in World and African History.", "Johannesburg"),
+            arrayOf("Robert Taylor", "roberttaylor@gmail.com", "password123", "Tutor", "Geography and Earth Sciences specialist with practical field experience.", "Durban"),
+            arrayOf("Lisa Mokoena", "lisamokoena@outlook.com", "password123", "Tutor", "University Mathematics lecturer focusing on Algebra and Calculus.", "Online")
         )
 
         for (tutor in tutors) {
-            val values = ContentValues()
-            values.put(COLUMN_FULL_NAME, tutor[0])
-            values.put(COLUMN_EMAIL, tutor[1])
-            values.put(COLUMN_PASSWORD, tutor[2])
-            values.put(COLUMN_ROLE, tutor[3])
-            values.put(COLUMN_BIO, tutor[4])
-            values.put(COLUMN_LOCATION, tutor[5])
-            values.put(COLUMN_STATUS, "Approved")
-            db?.insert(TABLE_USERS, null, values)
+            insertUserIfNotExists(db, tutor[0], tutor[1], tutor[2], tutor[3], tutor[4], "Approved", tutor[5])
         }
     }
 
     private fun preloadStudents(db: SQLiteDatabase?) {
         val students = arrayOf(
-            arrayOf("Alex Johnson", "alex@student.com", "password123", "Student"),
-            arrayOf("Emma Wilson", "emma@student.com", "password123", "Student")
+            arrayOf("Alex Johnson", "alexjohnson@gmail.com", "password123", "Cape Town"),
+            arrayOf("Emma Wilson", "emmawilson@outlook.com", "password123", "Johannesburg"),
+            arrayOf("Sipho Zulu", "siphozulu@yahoo.com", "password123", "Durban"),
+            arrayOf("Liam Botha", "liambotha@gmail.com", "password123", "Cape Town"),
+            arrayOf("Chloe Pillay", "chloepillay@outlook.com", "password123", "Durban"),
+            arrayOf("Thabo Mbeki", "thabombeki@yahoo.com", "password123", "Johannesburg")
         )
         for (student in students) {
-            val values = ContentValues()
-            values.put(COLUMN_FULL_NAME, student[0])
-            values.put(COLUMN_EMAIL, student[1])
-            values.put(COLUMN_PASSWORD, student[2])
-            values.put(COLUMN_ROLE, student[3])
-            values.put(COLUMN_STATUS, "Approved")
+            insertUserIfNotExists(db, student[0], student[1], student[2], "Student", "", "Approved", student[3])
+        }
+    }
+
+    private fun preloadPendingUsers(db: SQLiteDatabase?) {
+        val pendingUsers = arrayOf(
+            arrayOf("James Peterson", "jamespeterson@gmail.com", "password123", "Tutor", "Mathematics teacher awaiting approval.", "Cape Town"),
+            arrayOf("Maria Garcia", "mariagarcia@outlook.com", "password123", "Tutor", "Science tutor specializing in Biology.", "Online"),
+            arrayOf("Jessica Brown", "jessicabrown@yahoo.com", "password123", "Student", "", "Johannesburg")
+        )
+        for (user in pendingUsers) {
+            insertUserIfNotExists(db, user[0], user[1], user[2], user[3], user[4], "Pending", user[5])
+        }
+    }
+
+    private fun insertUserIfNotExists(
+        db: SQLiteDatabase?,
+        fullName: String,
+        email: String,
+        password: String,
+        role: String,
+        bio: String,
+        status: String,
+        location: String
+    ) {
+        val cursor = db?.rawQuery("SELECT $COLUMN_ID FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
+        val exists = cursor?.use { it.count > 0 } ?: false
+        if (!exists) {
+            val values = ContentValues().apply {
+                put(COLUMN_FULL_NAME, fullName)
+                put(COLUMN_EMAIL, email)
+                put(COLUMN_PASSWORD, password)
+                put(COLUMN_ROLE, role)
+                put(COLUMN_BIO, bio)
+                put(COLUMN_STATUS, status)
+                put(COLUMN_LOCATION, location)
+            }
             db?.insert(TABLE_USERS, null, values)
+        }
+    }
+
+    private fun preloadBookings(db: SQLiteDatabase?) {
+        val cursor = db?.rawQuery("SELECT COUNT(*) FROM $TABLE_BOOKINGS", null)
+        val count = cursor?.use { if (it.moveToFirst()) it.getInt(0) else 0 } ?: 0
+        if (count >= 10) return
+
+        val bookingsData = arrayOf(
+            arrayOf("12/10/2026", "Mathematics", "Dr. John Smith", "Alex Johnson", "A", "PRESENT"),
+            arrayOf("14/10/2026", "Science", "Prof. Sarah Jenkins", "Alex Johnson", "88%", "PRESENT"),
+            arrayOf("15/10/2026", "English", "Michael Chen", "Alex Johnson", "B+", "PRESENT"),
+            arrayOf("18/10/2026", "Programming", "David Ndlovu", "Alex Johnson", "95%", "PRESENT"),
+            arrayOf("20/10/2026", "Mathematics", "Lisa Mokoena", "Emma Wilson", "A-", "PRESENT"),
+            arrayOf("22/10/2026", "Science", "Dr. Emily Davis", "Emma Wilson", "91%", "PRESENT"),
+            arrayOf("24/10/2026", "History", "Amanda Naidoo", "Emma Wilson", "B", "PRESENT"),
+            arrayOf("25/10/2026", "Geography", "Robert Taylor", "Sipho Zulu", "82%", "PRESENT"),
+            arrayOf("26/10/2026", "Mathematics", "Dr. John Smith", "Sipho Zulu", "A", "PRESENT"),
+            arrayOf("28/10/2026", "Programming", "David Ndlovu", "Liam Botha", "89%", "PRESENT"),
+            arrayOf("30/10/2026", "English", "Michael Chen", "Chloe Pillay", "A+", "PRESENT"),
+            arrayOf("02/11/2026", "Science", "Prof. Sarah Jenkins", "Thabo Mbeki", "78%", "PRESENT"),
+            arrayOf("05/11/2026", "Geography", "Robert Taylor", "Alex Johnson", "Pending", "ABSENT"),
+            arrayOf("08/11/2026", "Mathematics", "Dr. John Smith", "Emma Wilson", null, null),
+            arrayOf("10/11/2026", "History", "Amanda Naidoo", "Sipho Zulu", null, null)
+        )
+
+        for (booking in bookingsData) {
+            val values = ContentValues().apply {
+                put(COLUMN_DATE, booking[0])
+                put(COLUMN_SUBJECT, booking[1])
+                put(COLUMN_TUTOR_NAME, booking[2])
+                put(COLUMN_STUDENT_NAME, booking[3])
+                if (booking[4] != null) put(COLUMN_GRADE, booking[4])
+                if (booking[5] != null) put(COLUMN_ATTENDANCE, booking[5])
+            }
+            db?.insert(TABLE_BOOKINGS, null, values)
         }
     }
 
@@ -136,6 +203,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 addColumnIfNotExists(db, TABLE_USERS, COLUMN_LOCATION, "TEXT")
             } catch (e: Exception) {
                 Log.e("DatabaseHelper", "Error adding location column: ${e.message}")
+            }
+        }
+        if (oldVersion < 12) {
+            try {
+                seedInitialData(db)
+            } catch (e: Exception) {
+                Log.e("DatabaseHelper", "Error seeding data during upgrade: ${e.message}")
             }
         }
     }

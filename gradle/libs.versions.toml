@@ -10,6 +10,9 @@ activity = "1.13.0"
 constraintlayout = "2.2.1"
 playServicesMaps = "20.0.0"
 cardview = "1.0.0"
+materialVersion = "1.14.0"
+googleGmsGoogleServices = "4.5.0"
+firebaseDatabase = "23.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -22,7 +25,10 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
 
