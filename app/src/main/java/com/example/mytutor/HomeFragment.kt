@@ -51,12 +51,12 @@ class HomeFragment : Fragment() {
     private fun showLogoutMenu(view: View) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.menu.add("Logout")
-        popupMenu.menu.add("Profile")
+        popupMenu.menu.add("Settings")
         popupMenu.setOnMenuItemClickListener { item ->
             if (item.title == "Logout") {
                 logout()
                 true
-            }else if(item.title =="Profile"){
+            }else if(item.title =="Settings"){
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.frame_container, ProfileFragment())
                     .addToBackStack(null)

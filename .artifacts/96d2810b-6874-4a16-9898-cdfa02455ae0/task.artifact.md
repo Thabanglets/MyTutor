@@ -1,0 +1,6 @@
+- [x] Create implementation plan and obtain user approval <!-- id: 0 -->
+- [x] Implement `NylasCalendarHelper.kt` <!-- id: 1 -->
+- [x] Update `BookingFragment.kt` to use Nylas Calendar API <!-- id: 2 -->
+- [x] Update `TutorScheduleFragment.kt` to use Nylas Calendar API <!-- id: 3 -->
+- [x] Remove or deprecate `GoogleCalendarHelper.kt` <!-- id: 4 -->
+- [x] Verify build and functionality <!-- id: 5 -->

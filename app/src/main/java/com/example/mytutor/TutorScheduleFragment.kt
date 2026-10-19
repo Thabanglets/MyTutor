@@ -1,5 +1,6 @@
 package com.example.mytutor
 
+import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,8 +9,15 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.RadioButton
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.mytutor.databinding.FragmentTutorScheduleBinding
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class TutorScheduleFragment : Fragment() {
@@ -18,6 +26,7 @@ class TutorScheduleFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var databaseHelper: DatabaseHelper
     private var selectedDate: String = ""
+    private var selectedTime: String = "10:00"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,6 +41,30 @@ class TutorScheduleFragment : Fragment() {
 
         binding.scheduleCalendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = "$dayOfMonth/${month + 1}/$year"
+        }
+
+        // Setup Time Picker
+        binding.timeAutoComplete.setText("10:00 AM")
+        binding.timeAutoComplete.setOnClickListener {
+            val timePicker = MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_12H)
+                .setHour(10)
+                .setMinute(0)
+                .setTitleText("Select Lesson Time")
+                .build()
+
+            timePicker.addOnPositiveButtonClickListener {
+                val hour = timePicker.hour
+                val minute = timePicker.minute
+                selectedTime = String.format("%02d:%02d", hour, minute)
+
+                val amPm = if (hour < 12) "AM" else "PM"
+                val displayHour = if (hour % 12 == 0) 12 else hour % 12
+                val displayTime = String.format("%02d:%02d %s", displayHour, minute, amPm)
+                binding.timeAutoComplete.setText(displayTime)
+            }
+
+            timePicker.show(childFragmentManager, "TUTOR_LESSON_TIME_PICKER")
         }
 
         // Setup Student Dropdown
@@ -66,14 +99,41 @@ class TutorScheduleFragment : Fragment() {
             val result = databaseHelper.addBooking(selectedDate, subject, tutorName, studentName)
             if (result != -1L) {
                 Toast.makeText(requireContext(), "Lesson scheduled for $studentName!", Toast.LENGTH_SHORT).show()
-                
-                // Navigate back to TutorHomeFragment to show the new session
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.frame_container, TutorHomeFragment())
-                    .commit()
-                
-                // Update bottom navigation selection
-                (activity as? HomeActivity)?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)?.selectedItemId = R.id.home
+
+                fun navigateTutorHome() {
+                    if (!isAdded) return
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.frame_container, TutorHomeFragment())
+                        .commit()
+
+                    (activity as? HomeActivity)?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)?.selectedItemId = R.id.home
+                }
+
+                // Sync to Nylas Calendar
+                if (binding.switchGoogleCalendar.isChecked) {
+                    lifecycleScope.launch {
+                        val nylasResult = NylasCalendarHelper.insertEventToNylas(
+                            title = "$subject Tutoring Lesson",
+                            description = "MyTutor lesson with $studentName",
+                            dateStr = selectedDate,
+                            timeStr = selectedTime
+                        )
+                        if (isAdded) {
+                            nylasResult.fold(
+                                onSuccess = {
+                                    Toast.makeText(requireContext(), "Synced to Nylas Calendar!", Toast.LENGTH_SHORT).show()
+                                },
+                                onFailure = {
+                                    val intent = NylasCalendarHelper.createCalendarIntent(subject, studentName, selectedDate, selectedTime)
+                                    startActivity(intent)
+                                }
+                            )
+                        }
+                        navigateTutorHome()
+                    }
+                } else {
+                    navigateTutorHome()
+                }
             } else {
                 Toast.makeText(requireContext(), "Scheduling Failed", Toast.LENGTH_SHORT).show()
             }
@@ -85,7 +145,7 @@ class TutorScheduleFragment : Fragment() {
     private fun setupDynamicSubjects() {
         val sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
         val tutorName = sharedPreferences.getString("userName", "") ?: ""
-        
+
         val tutorBio = databaseHelper.getTutorBio(tutorName)
         val pastBookings = databaseHelper.getBookingsForTutor(tutorName)
         val allPossibleSubjects = resources.getStringArray(R.array.subjects_array)
@@ -102,15 +162,12 @@ class TutorScheduleFragment : Fragment() {
             }
         }
 
-        // If no subjects found, provide a default or use bio keywords more aggressively
         if (tutorSubjects.isEmpty()) {
-            // Fallback: If bio contains "Math" but array has "Mathematics", try to match
             if (tutorBio.contains("Math", ignoreCase = true)) tutorSubjects.add("Mathematics")
             if (tutorBio.contains("Science", ignoreCase = true)) tutorSubjects.add("Science")
             if (tutorBio.contains("English", ignoreCase = true)) tutorSubjects.add("English")
         }
 
-        // Create RadioButtons
         binding.tutorSubjectGroup.removeAllViews()
         tutorSubjects.forEach { subject ->
             val rb = RadioButton(requireContext())
@@ -124,8 +181,7 @@ class TutorScheduleFragment : Fragment() {
             rb.layoutParams = params
             binding.tutorSubjectGroup.addView(rb)
         }
-        
-        // Select first one by default if any exist
+
         if (binding.tutorSubjectGroup.childCount > 0) {
             (binding.tutorSubjectGroup.getChildAt(0) as RadioButton).isChecked = true
         }

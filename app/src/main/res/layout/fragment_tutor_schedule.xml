@@ -110,13 +110,41 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="8dp"
-                    android:text="Select Date"
+                    android:text="Select Date &amp; Time"
                     android:textStyle="bold" />
 
                 <CalendarView
                     android:id="@+id/scheduleCalendar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Select Lesson Time (e.g. 10:00 AM)">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/timeAutoComplete"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:inputType="none"
+                        android:padding="12dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Sync to Calendar Switch -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchGoogleCalendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:checked="true"
+                    android:text="Sync Lesson to Google Calendar"
+                    android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/btnScheduleLesson"

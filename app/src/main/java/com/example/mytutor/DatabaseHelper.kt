@@ -5,12 +5,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import java.security.MessageDigest
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "MyTutor.db"
-        private const val DATABASE_VERSION = 12 // Incremented to 12 to update email domains to gmail/outlook/yahoo
+        private const val DATABASE_VERSION = 14 // Incremented to 14 for pre-hashed preload passwords
+        private const val HASHED_PASSWORD_123 = "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"
+        private const val HASHED_ADMIN_123 = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
 
         // User table
         const val TABLE_USERS = "users"
@@ -69,19 +72,19 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     private fun preloadAdmin(db: SQLiteDatabase?) {
-        insertUserIfNotExists(db, "Admin User", "admin@gmail.com", "admin123", "Admin", "System Administrator", "Approved", "Cape Town")
+        insertUserIfNotExists(db, "Admin User", "admin@gmail.com", HASHED_ADMIN_123, "Admin", "System Administrator", "Approved", "Cape Town")
     }
 
     private fun preloadTutors(db: SQLiteDatabase?) {
         val tutors = arrayOf(
-            arrayOf("Dr. John Smith", "johnsmith@gmail.com", "password123", "Tutor", "Expert in Advanced Mathematics with 10 years of experience.", "Cape Town"),
-            arrayOf("Prof. Sarah Jenkins", "sarahjenkins@outlook.com", "password123", "Tutor", "Specializes in Organic Chemistry, Biology and Science.", "Johannesburg"),
-            arrayOf("Michael Chen", "michaelchen@yahoo.com", "password123", "Tutor", "Native English speaker focused on Literature, Grammar and Writing.", "Durban"),
-            arrayOf("Dr. Emily Davis", "emilydavis@gmail.com", "password123", "Tutor", "Physics PhD with a passion for teaching high school Science students.", "Online"),
-            arrayOf("David Ndlovu", "davidndlovu@outlook.com", "password123", "Tutor", "Software Engineer teaching Programming, Data Structures and Computer Science.", "Cape Town"),
-            arrayOf("Amanda Naidoo", "amandanaidoo@yahoo.com", "password123", "Tutor", "Experienced History educator specializing in World and African History.", "Johannesburg"),
-            arrayOf("Robert Taylor", "roberttaylor@gmail.com", "password123", "Tutor", "Geography and Earth Sciences specialist with practical field experience.", "Durban"),
-            arrayOf("Lisa Mokoena", "lisamokoena@outlook.com", "password123", "Tutor", "University Mathematics lecturer focusing on Algebra and Calculus.", "Online")
+            arrayOf("Dr. John Smith", "johnsmith@gmail.com", HASHED_PASSWORD_123, "Tutor", "Expert in Advanced Mathematics with 10 years of experience.", "Cape Town"),
+            arrayOf("Prof. Sarah Jenkins", "sarahjenkins@outlook.com", HASHED_PASSWORD_123, "Tutor", "Specializes in Organic Chemistry, Biology and Science.", "Johannesburg"),
+            arrayOf("Michael Chen", "michaelchen@yahoo.com", HASHED_PASSWORD_123, "Tutor", "Native English speaker focused on Literature, Grammar and Writing.", "Durban"),
+            arrayOf("Dr. Emily Davis", "emilydavis@gmail.com", HASHED_PASSWORD_123, "Tutor", "Physics PhD with a passion for teaching high school Science students.", "Online"),
+            arrayOf("David Ndlovu", "davidndlovu@outlook.com", HASHED_PASSWORD_123, "Tutor", "Software Engineer teaching Programming, Data Structures and Computer Science.", "Cape Town"),
+            arrayOf("Amanda Naidoo", "amandanaidoo@yahoo.com", HASHED_PASSWORD_123, "Tutor", "Experienced History educator specializing in World and African History.", "Johannesburg"),
+            arrayOf("Robert Taylor", "roberttaylor@gmail.com", HASHED_PASSWORD_123, "Tutor", "Geography and Earth Sciences specialist with practical field experience.", "Durban"),
+            arrayOf("Lisa Mokoena", "lisamokoena@outlook.com", HASHED_PASSWORD_123, "Tutor", "University Mathematics lecturer focusing on Algebra and Calculus.", "Online")
         )
 
         for (tutor in tutors) {
@@ -91,12 +94,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     private fun preloadStudents(db: SQLiteDatabase?) {
         val students = arrayOf(
-            arrayOf("Alex Johnson", "alexjohnson@gmail.com", "password123", "Cape Town"),
-            arrayOf("Emma Wilson", "emmawilson@outlook.com", "password123", "Johannesburg"),
-            arrayOf("Sipho Zulu", "siphozulu@yahoo.com", "password123", "Durban"),
-            arrayOf("Liam Botha", "liambotha@gmail.com", "password123", "Cape Town"),
-            arrayOf("Chloe Pillay", "chloepillay@outlook.com", "password123", "Durban"),
-            arrayOf("Thabo Mbeki", "thabombeki@yahoo.com", "password123", "Johannesburg")
+            arrayOf("Alex Johnson", "alexjohnson@gmail.com", HASHED_PASSWORD_123, "Cape Town"),
+            arrayOf("Emma Wilson", "emmawilson@outlook.com", HASHED_PASSWORD_123, "Johannesburg"),
+            arrayOf("Sipho Zulu", "siphozulu@yahoo.com", HASHED_PASSWORD_123, "Durban"),
+            arrayOf("Liam Botha", "liambotha@gmail.com", HASHED_PASSWORD_123, "Cape Town"),
+            arrayOf("Chloe Pillay", "chloepillay@outlook.com", HASHED_PASSWORD_123, "Durban"),
+            arrayOf("Thabo Mbeki", "thabombeki@yahoo.com", HASHED_PASSWORD_123, "Johannesburg")
         )
         for (student in students) {
             insertUserIfNotExists(db, student[0], student[1], student[2], "Student", "", "Approved", student[3])
@@ -105,9 +108,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     private fun preloadPendingUsers(db: SQLiteDatabase?) {
         val pendingUsers = arrayOf(
-            arrayOf("James Peterson", "jamespeterson@gmail.com", "password123", "Tutor", "Mathematics teacher awaiting approval.", "Cape Town"),
-            arrayOf("Maria Garcia", "mariagarcia@outlook.com", "password123", "Tutor", "Science tutor specializing in Biology.", "Online"),
-            arrayOf("Jessica Brown", "jessicabrown@yahoo.com", "password123", "Student", "", "Johannesburg")
+            arrayOf("James Peterson", "jamespeterson@gmail.com", HASHED_PASSWORD_123, "Tutor", "Mathematics teacher awaiting approval.", "Cape Town"),
+            arrayOf("Maria Garcia", "mariagarcia@outlook.com", HASHED_PASSWORD_123, "Tutor", "Science tutor specializing in Biology.", "Online"),
+            arrayOf("Jessica Brown", "jessicabrown@yahoo.com", HASHED_PASSWORD_123, "Student", "", "Johannesburg")
         )
         for (user in pendingUsers) {
             insertUserIfNotExists(db, user[0], user[1], user[2], user[3], user[4], "Pending", user[5])
@@ -127,10 +130,15 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val cursor = db?.rawQuery("SELECT $COLUMN_ID FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
         val exists = cursor?.use { it.count > 0 } ?: false
         if (!exists) {
+            val storedPassword = if (password.length == 64 && password.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }) {
+                password
+            } else {
+                hashPassword(password)
+            }
             val values = ContentValues().apply {
                 put(COLUMN_FULL_NAME, fullName)
                 put(COLUMN_EMAIL, email)
-                put(COLUMN_PASSWORD, password)
+                put(COLUMN_PASSWORD, storedPassword)
                 put(COLUMN_ROLE, role)
                 put(COLUMN_BIO, bio)
                 put(COLUMN_STATUS, status)
@@ -138,6 +146,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             }
             db?.insert(TABLE_USERS, null, values)
         }
+    }
+
+    private fun hashPassword(password: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
     }
 
     private fun preloadBookings(db: SQLiteDatabase?) {
@@ -205,7 +218,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 Log.e("DatabaseHelper", "Error adding location column: ${e.message}")
             }
         }
-        if (oldVersion < 12) {
+        if (oldVersion < 14) {
             try {
                 seedInitialData(db)
             } catch (e: Exception) {
@@ -237,7 +250,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val values = ContentValues()
         values.put(COLUMN_FULL_NAME, fullName)
         values.put(COLUMN_EMAIL, email)
-        values.put(COLUMN_PASSWORD, password)
+        values.put(COLUMN_PASSWORD, hashPassword(password))
         values.put(COLUMN_ROLE, role)
         values.put(COLUMN_BIO, bio)
         values.put(COLUMN_STATUS, status)
@@ -304,8 +317,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     fun checkUser(email: String, password: String): Boolean {
+        val hashedPassword = hashPassword(password)
         val db = this.readableDatabase
-        val cursor = db.query(TABLE_USERS, arrayOf(COLUMN_ID), "$COLUMN_EMAIL = ? AND $COLUMN_PASSWORD = ?", arrayOf(email, password), null, null, null)
+        val cursor = db.query(TABLE_USERS, arrayOf(COLUMN_ID), "$COLUMN_EMAIL = ? AND $COLUMN_PASSWORD = ?", arrayOf(email, hashedPassword), null, null, null)
         val count = cursor.count
         cursor.close()
         return count > 0
@@ -411,7 +425,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val values = ContentValues()
         values.put(COLUMN_FULL_NAME, fullName)
         values.put(COLUMN_BIO, bio)
-        values.put(COLUMN_PASSWORD, password)
+        if (password.isNotEmpty()) {
+            values.put(COLUMN_PASSWORD, hashPassword(password))
+        }
         return db.update(TABLE_USERS, values, "$COLUMN_EMAIL = ?", arrayOf(email))
     }
 
