@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.example.mytutor.databinding.FragmentProfileBinding
 
@@ -16,7 +18,7 @@ class ProfileFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var userEmail: String
-    private var userRole: String = ""
+    private var userRole: String = "Student"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -24,12 +26,13 @@ class ProfileFragment : Fragment() {
     ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         databaseHelper = DatabaseHelper(requireContext())
-        
+
         val sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
         userEmail = sharedPreferences.getString("userEmail", "") ?: ""
         userRole = sharedPreferences.getString("userRole", "Student") ?: "Student"
 
         loadUserData()
+        setupSettingsPreferences()
 
         binding.btnSaveProfile.setOnClickListener {
             saveProfileChanges()
@@ -37,6 +40,10 @@ class ProfileFragment : Fragment() {
 
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
+        }
+
+        binding.btnContactSupport.setOnClickListener {
+            showSupportDialog()
         }
 
         binding.btnLogout.setOnClickListener {
@@ -51,13 +58,25 @@ class ProfileFragment : Fragment() {
 
         val user = databaseHelper.getUser(userEmail)
         user?.let {
-            binding.etFullName.setText(it.fullName)
-            binding.etEmail.setText(it.email)
-            binding.etBio.setText(it.bio)
+            binding.tvProfileName.text = it.fullName
+            binding.tvProfileEmail.text = it.email
+            binding.tvProfileRole.text = it.role.uppercase()
+
+            binding.etFullName.setText(it.fullName.ifEmpty { "" })
+            binding.etEmail.setText(it.email.ifEmpty { "" })
             
-            // Password is not displayed for security, but we'll allow updating it
-            // We can fetch the password directly if needed, but usually we just let them set a new one
-            
+            if (it.location.isNotBlank()) {
+                binding.etLocation.setText(it.location)
+            } else {
+                binding.etLocation.setText("")
+            }
+
+            if (it.bio.isNotBlank()) {
+                binding.etBio.setText(it.bio)
+            } else {
+                binding.etBio.setText("")
+            }
+
             if (it.role == "Tutor") {
                 binding.bioLayout.visibility = View.VISIBLE
             } else {
@@ -66,8 +85,55 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun setupSettingsPreferences() {
+        val sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+
+        // Dark Mode Preference
+        val isDarkMode = sharedPreferences.getBoolean("isDarkMode", false)
+        binding.switchDarkMode.isChecked = isDarkMode
+
+        binding.switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("isDarkMode", isChecked).apply()
+            val mode = if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            AppCompatDelegate.setDefaultNightMode(mode)
+            Toast.makeText(
+                requireContext(),
+                if (isChecked) "Dark Mode Enabled" else "Light Mode Enabled",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        // Notification Preference
+        val notificationsEnabled = sharedPreferences.getBoolean("notificationsEnabled", true)
+        binding.switchNotifications.isChecked = notificationsEnabled
+
+        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("notificationsEnabled", isChecked).apply()
+            Toast.makeText(
+                requireContext(),
+                if (isChecked) "Session Notifications Enabled" else "Session Notifications Disabled",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun showSupportDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Help & Support")
+            .setMessage(
+                "Need assistance or have feedback?\n\n" +
+                        "• Support Email: admin@gmail.com\n" +
+                        "• Operating Hours: Mon - Fri (8:00 - 17:00)\n" +
+                        "• Version: MyTutor v1.0.0\n\n" +
+                        "For urgent session changes, please contact your tutor or student directly."
+            )
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     private fun saveProfileChanges() {
         val fullName = binding.etFullName.text.toString().trim()
+        val location = binding.etLocation.text.toString().trim()
         val bio = binding.etBio.text.toString().trim()
         val password = binding.etPassword.text.toString().trim()
 
@@ -76,7 +142,6 @@ class ProfileFragment : Fragment() {
             return
         }
 
-        // If password field is empty, keep existing password. 
         val finalPassword = if (password.isEmpty()) {
             databaseHelper.getUserPassword(userEmail) ?: ""
         } else {
@@ -90,11 +155,15 @@ class ProfileFragment : Fragment() {
 
         val result = databaseHelper.updateUser(userEmail, fullName, bio, finalPassword)
         if (result > 0) {
-            // Update SharedPreferences so the name change reflects everywhere
             val sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit().putString("userName", fullName).apply()
-            
-            Toast.makeText(requireContext(), "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+            sharedPreferences.edit()
+                .putString("userName", fullName)
+                .putString("userLocation", location)
+                .apply()
+
+            binding.tvProfileName.text = fullName
+
+            Toast.makeText(requireContext(), "Settings & Profile updated successfully!", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(requireContext(), "Failed to update profile", Toast.LENGTH_SHORT).show()
         }
@@ -103,7 +172,7 @@ class ProfileFragment : Fragment() {
     private fun logout() {
         val sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().clear().apply()
-        
+
         val intent = Intent(requireActivity(), LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

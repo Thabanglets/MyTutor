@@ -9,6 +9,8 @@ material = "1.13.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
 playServicesMaps = "20.0.0"
+playServicesAuth = "21.2.0"
+googleApiServicesCalendar = "v3-rev20220715-2.0.0"
 cardview = "1.0.0"
 materialVersion = "1.14.0"
 googleGmsGoogleServices = "4.5.0"
@@ -24,6 +26,8 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+google-api-services-calendar = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "googleApiServicesCalendar" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
