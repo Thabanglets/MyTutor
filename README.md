@@ -130,5 +130,7 @@ MyTutor maintains high test coverage across all layers of the application:
 - **Instrumented Integration Tests:** Validate SQLite CRUD operations and database helper logic (`DatabaseHelperTest`).
 - **UI Tests:** Verify layout rendering and user interaction flows (`LoginActivityTest`).
 
+## video link
+https://youtu.be/A2El2r2xHoY?si=XjXMEQyQCR_lmPk6
 ---
 *© 2026 MyTutor Android Project. All rights reserved.*
