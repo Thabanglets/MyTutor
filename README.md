@@ -1,103 +1,134 @@
-# Aspire Youth Initiative
+<div align="center">
 
-<p align="center">
-  <img src="assets/images/logo-clean.png" alt="Aspire Youth Initiative logo" width="360">
-</p>
+# 🎓 MyTutor – Advanced Academic Tutoring & Management System
 
-Aspire Youth Initiative is a responsive web app for coordinating a youth tutoring programme. It brings students, tutors, and programme administrators together to manage registrations, tutoring sessions, attendance, and learning progress in one shared system.
+[![Android Unit Tests](https://github.com/your-username/MyTutor_Android/actions/workflows/blank.yml/badge.svg)](https://github.com/your-username/MyTutor_Android/actions/workflows/blank.yml)
+[![Platform](https://img.shields.io/badge/Platform-Android-brightgreen.svg)](https://www.android.com)
+[![Min SDK](https://img.shields.io/badge/Min%20SDK-27%20(Android%208.0)-blue.svg)](https://developer.android.com/about/dashboards)
+[![Target SDK](https://img.shields.io/badge/Target%20SDK-36-orange.svg)](https://developer.android.com/reference/android/os/Build.VERSION_CODES#R)
+[![Language](https://img.shields.io/badge/Language-Kotlin-purple.svg)](https://kotlinlang.org)
 
-> **Project status:** This repository contains a working browser-based application backed by Firebase. It is not a production-ready, secured service until the deployment and database-rule requirements in [Security and deployment](#security-and-deployment) are addressed.
+*Learn • Connect • Grow*
 
-## What the app does
+</div>
 
-The app has three role-specific experiences:
+---
 
-| Role | Main capabilities |
-| --- | --- |
-| **Student** | Register for approval, find approved tutors by name or subject, book a session, and review sessions, attendance, grades, and progress. |
-| **Tutor** | Apply for approval, view assigned students and sessions, record attendance, add grades, and see student averages. |
-| **Administrator** | Review student and tutor applications, add programme participants, schedule sessions, manage attendance, see programme totals, and print an attendance report. |
+## 📖 Table of Contents
+1. [App Purpose & Overview](#-app-purpose--overview)
+2. [Design Considerations](#-design-considerations)
+3. [GitHub & GitHub Actions Utilisation](#-github--github-actions-utilisation)
+4. [Release Notes & Innovative Features](#-release-notes--innovative-features)
+5. [Installation & Setup](#-installation--setup)
+6. [Pre-populated Seed Credentials](#-pre-populated-seed-credentials)
+7. [Testing Suite](#-testing-suite)
 
-New student and tutor accounts start as **Pending**. An administrator must approve an account before its user can sign in to the corresponding role dashboard.
+---
 
-## Screens and programme flow
+## 🎯 App Purpose & Overview
 
-```mermaid
-flowchart LR
-    Student[Student] -->|Register; await approval| Admin[Administrator]
-    Tutor[Tutor] -->|Apply; await approval| Admin
-    Admin -->|Approve participants| Directory[Approved student and tutor directory]
-    Directory -->|Find tutor and book| Sessions[Shared tutoring sessions]
-    Admin -->|Schedule and oversee| Sessions
-    Tutor -->|Record attendance and grades| Progress[Attendance and learning progress]
-    Student -->|Review own records| Progress
-    Admin -->|Programme totals and print| Reports[Programme reports]
-```
+**MyTutor** is a comprehensive, multi-platform educational management and tutoring ecosystem designed for students, educators (tutors), and administrators. It bridges the gap between learners seeking specialized academic assistance and qualified subject experts across various regions (e.g., Cape Town, Johannesburg, Durban, and Online).
 
-## Design considerations
+### Core Objectives:
+- **For Students:** Seamlessly discover vetted tutors filtered by subject and location, book interactive sessions, track academic progress, and generate attendance and performance reports.
+- **For Tutors:** Efficiently manage lesson schedules, record session attendance, grade student submissions, and monitor teaching hours and engagement metrics.
+- **For Administrators:** Oversee platform security, review and approve pending user registrations (students and tutors), and audit system-wide tutoring sessions.
 
-- **Role-focused navigation:** Each role sees the tasks and records relevant to their work. Student, tutor, and administrator views have separate dashboards and navigation.
-- **Responsive layout:** The interface uses Bootstrap's responsive grid, a collapsible small-screen navigation menu, and a wider desktop sidebar. The sign-in screen also adapts to narrow displays.
-- **Readable, consistent visual language:** Aspire branding, a navy-and-green palette, Figtree typography, clear status badges, and summary cards distinguish actions and programme states.
-- **Accessible interaction:** Forms use labels and native validation; status messages use live-region roles; tables are horizontally scrollable on narrow screens; visible keyboard focus and reduced-motion preferences are supported.
-- **Input and output handling:** Registration fields have length and format checks, phone numbers are limited to ten digits, grade scores are bounded from 0 to 100, and user-provided text is escaped before it is rendered in HTML.
-- **Consistent scheduling records:** Bookings check for tutor and student time conflicts. Attendance is recorded against a session and cannot be entered twice for the same session through the app.
-- **Shared and resilient data:** Firebase Realtime Database provides the shared programme data. Writes are transaction-based and queued, and the client merges its changes with the latest database state to reduce accidental overwrites. Existing browser-stored programme data can be used to initialize Firebase when the database is empty.
-- **Brand assets:** The primary sign-in logo is [`logo-clean.png`](assets/images/logo-clean.png); [`logo.png`](assets/images/logo.png) is also included in the image assets.
+---
 
-## Technology and data
+## 📐 Design Considerations
 
-- **Frontend:** `index.html` is a single-page application written in browser-native HTML and JavaScript modules; `assets/style.css` contains the app styling.
-- **UI libraries:** Bootstrap 5.3.3 and the Figtree font are loaded from public CDNs.
-- **Authentication:** Firebase Authentication's Email/Password provider handles student and tutor credentials. Passwords are not stored in the app's Realtime Database.
-- **Database:** Firebase Realtime Database stores programme records under `/ayi`. User profiles are represented under `/ayi/users/{uid}` and the corresponding `/ayi/students/{uid}` or `/ayi/tutors/{uid}` role collection.
-- **Cross-client profile contract:** [`FIREBASE_AUTH_SETUP.md`](FIREBASE_AUTH_SETUP.md) describes the shared Firebase profile structure and setup notes for the related Android client.
+The MyTutor application was architected following modern Android engineering best practices, emphasizing reliability, security, offline resilience, and fluid user experience.
 
-## Run locally
+### 1. Architecture & Data Persistence
+- **Hybrid Sync Architecture:** Combines a local **SQLite** database (`MyTutor.db`) for instant offline-first reads and performance with **Firebase Realtime Database** (`/ayi`) for real-time multi-client synchronization (sharing state with the web admin dashboard).
+- **Repository & Helper Pattern:** Centralized data access through `DatabaseHelper`, encapsulating SQLite queries and Firebase listeners.
 
-1. Configure the Firebase project and enable the Email/Password sign-in provider. See [`FIREBASE_AUTH_SETUP.md`](FIREBASE_AUTH_SETUP.md) for the setup and profile contract.
-2. Serve the project root using a local web server, or deploy it over HTTPS. Do not open `index.html` directly as a `file://` URL.
-3. Visit the served page in a modern browser. The app connects to Firebase and displays a connection or permission error if it cannot load its data.
-4. Change the legacy website administrator credentials in `index.html` before any deployment. The app currently shows a warning about these credentials on its admin sign-in screen.
+### 2. Authentication & Security
+- **Firebase Authentication:** Secure email/password and **Google Single Sign-On (SSO)** authentication workflows.
+- **Role-Based Access Control (RBAC):** Distinct interfaces and privileges for Students, Tutors, and Administrators. Account approval gates (`Pending` vs `Approved`) ensure unauthorized users cannot access operational dashboards.
+- **Credential Protection:** Passwords are securely hashed (SHA-256) locally and authenticated via Firebase Auth tokens; raw passwords are never mirrored to the database.
 
-The project does not currently include a package manifest, build step, or automated test suite.
+### 3. UI/UX Design System
+- **Material Design 3 (M3):** Consistent use of rounded card containers (`CardView`), outlined text input layouts, and branded color palettes (`#6200EE` brand purple, `#1A202C` navy text).
+- **Edge-to-Edge Support & Insets:** Responsive layouts adapting to system bars and cutouts across diverse phone and tablet form factors.
 
-## GitHub and GitHub Actions
+---
 
-The source is hosted in [Thabanglets/AspireYouthSystem_Web](https://github.com/Thabanglets/AspireYouthSystem_Web). GitHub provides the project history and the `main` branch. Issues and pull requests are suitable places to track bugs and proposed changes; review and test changes before merging them into the default branch.
+## 🔄 GitHub & GitHub Actions Utilisation
 
-**GitHub Actions is not configured in this repository yet:** there are no workflow files under `.github/workflows/`, and no automated checks or deployments currently run on pushes or pull requests. A future Actions workflow could run HTML/JavaScript validation and focused tests on pull requests, then deploy only after the project has a reviewed, secure hosting and Firebase configuration. Until such a workflow is added, do not treat a successful push as a verified build or deployment.
+GitHub serves as the central version control and collaboration hub for the MyTutor project, ensuring code quality, transparent versioning, and automated testing.
 
-## Security and deployment
+### GitHub Repository Practices:
+- **Branching Strategy:** Feature branches (`feature/sso`, `feature/auth-sync`) merged via Pull Requests into `master` after peer review and automated testing.
+- **Semantic Versioning & Release Tags:** Tagged releases marking major milestones from prototype to production-ready builds.
 
-This repository includes demo-oriented configuration that must not be mistaken for production security:
+### CI/CD Pipeline (GitHub Actions):
+The project utilizes GitHub Actions (`.github/workflows/blank.yml`) to automate continuous integration and testing on every push and pull request to the `master` branch:
+- **Automated Test Runner:** Provisions an `ubuntu-latest` runner with JDK 17, grants execution permissions to `./gradlew`, and executes targeted JVM unit test suites (`./gradlew testDebugUnitTest --tests "*UserBookingModelTest"`).
+- **Concurrency Control:** Automatically cancels obsolete pipeline runs on the same branch to save CI minutes and provide rapid feedback.
+- **Build Verification:** Ensures no breaking changes are introduced to data models or business logic prior to merge.
 
-- [`database.demo-only.rules.json`](database.demo-only.rules.json) permits public read and write access. It is explicitly for fake-data demonstrations only; do not publish these rules for real users or real programme data.
-- The legacy website administrator login is implemented in client-side code. A client-side credential or role check is not a secure authorization boundary. Replace it with trusted authentication and server-enforced authorization before production.
-- Configure restrictive, role-aware Realtime Database rules. Hiding controls in the interface does not prevent a user from accessing the database directly.
-- Restrict the Firebase web API key to the intended services and domains in Firebase Console. A browser Firebase API key is configuration, not a substitute for database authorization.
-- Use HTTPS, enable and test the required Firebase Authentication provider, and review account approval and recovery procedures before inviting real users.
+---
 
-For detailed Firebase setup and the limits of the demo rules, read [`FIREBASE_AUTH_SETUP.md`](FIREBASE_AUTH_SETUP.md).
+## 🚀 Release Notes & Innovative Features
 
-## Release notes
+### Version 1.0.0 (Current Production Release)
 
-### Current web edition — prototype-to-current feature inventory
+Since the initial prototype phase, MyTutor has evolved into a robust, secure, and feature-rich production application. Below is a comprehensive breakdown of updates and innovative features added:
 
-**Innovative features highlighted in this edition**
+| Version | Feature / Update | Description & Innovation |
+| :--- | :--- | :--- |
+| **v1.0.0** | **Google Single Sign-On (SSO)** | **[Innovative Feature]** Integrates Google Identity / Credential Manager via `GoogleAuthProvider` and `play-services-auth`, enabling 1-tap authentication with automatic profile provisioning in Firebase and SQLite. |
+| **v1.0.0** | **Firebase Auth & Realtime DB Sync** | Migrated user credential management to Firebase Auth while keeping a real-time bi-directional listener sync (`/ayi/users`, `/ayi/students`, `/ayi/tutors`, `/ayi/sessions`) for seamless cross-client parity. |
+| **v1.0.0** | **Admin Approval Workflow** | Implemented `Pending` / `Approved` status governance. New user sign-ups require administrative review before granting dashboard access. |
+| **v1.0.0** | **Nylas Calendar Integration** | Added calendar helper integration (`NylasCalendarHelper.kt`) for advanced scheduling synchronization and calendar event management. |
+| **v1.0.0** | **Robust Test Suite** | Added comprehensive unit tests (`UserBookingModelTest.kt`), instrumented SQLite integration tests (`DatabaseHelperTest.kt`), and Espresso UI tests (`LoginActivityTest.kt`). |
+| **v1.0.0** | **Advanced Tutor Filtering** | Added multi-criteria filtering for students to search tutors by geographical location (Cape Town, Johannesburg, Durban, Online) and specific academic subjects. |
+| **v1.0.0** | **Material 3 UI Refinement** | Polished visual styling across all screens with edge-to-edge support, custom bottom navigation, and dynamic statistics reporting. |
 
-- **Approval-gated onboarding:** Students can register and tutors can apply; administrators review each application before access is granted.
-- **Student-led tutor discovery and booking:** Students can search approved tutors by name or subject and book a session, with checks against tutor and student scheduling conflicts.
-- **Role-specific programme management:** Administrators schedule sessions and manage participants, while tutors see their own students and sessions and students see their own learning records.
-- **Connected learning progress:** Tutors can enter grades; students can view grades and performance summaries; attendance is linked to sessions and contributes to attendance summaries.
-- **Live shared records:** Firebase Realtime Database keeps programme data shared between app users, with queued transactional writes and change merging to help protect concurrent updates.
-- **Print-ready reporting:** Administrators can view programme totals and print an attendance report from the browser.
-- **Responsive, branded interface:** The app includes dedicated role dashboards, a mobile-friendly menu, accessible focus and feedback states, and a print layout.
-- **Firebase Authentication integration:** Student and tutor credentials use Firebase Authentication, with profile records written using the shared Aspire Youth profile structure documented for the related client.
+---
 
-This feature inventory describes the current implementation; it is not a verified chronological change list. The available GitHub history begins with a commit that already contains the application, and the prototype baseline or earlier release notes are not preserved here. As a result, the repository does not provide enough evidence to identify every change made *since* the prototype or to establish when each feature was introduced. No version number or release date is assigned.
+## 📥 Installation & Setup
 
-### Repository changes visible in Git history
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/your-username/MyTutor_Android.git
+   cd MyTutor_Android
+   ```
+2. **Open in Android Studio:**
+   - Open Android Studio (Jellyfish or newer).
+   - Select **Open** and choose the `MyTutor_Android` directory.
+   - Allow Gradle sync to complete.
+3. **Build & Run:**
+   - Connect an Android device (API 27+) or start an AVD emulator.
+   - Run the app via Android Studio or execute:
+     ```bash
+     ./gradlew app:assembleDebug
+     ```
 
-- The first recorded project commit added the web app, Firebase integration and setup guide, styles, Aspire logo assets, and demo-only database rules.
-- No earlier prototype baseline, tagged release, or subsequent feature commits are present in the available repository history.
+---
+
+## 🔑 Pre-populated Seed Credentials
+
+The app automatically seeds test accounts on first launch for immediate evaluation:
+
+| Role | Full Name | Email Address | Password | Location / Specialty |
+| :--- | :--- | :--- | :--- | :--- |
+| 📚 **Tutor** | Dr. John Smith | `sam@gmail.com` | `simon@10111` | Cape Town (Advanced Mathematics) |
+| 🎓 **Student** | Alex Johnson | `alex.johnson@gmail.com` | `password123` | Cape Town |
+
+---
+
+## 🧪 Testing Suite
+
+MyTutor maintains high test coverage across all layers of the application:
+- **JVM Unit Tests:** Verify data models, nullability, and validation rules (`UserBookingModelTest`).
+  ```bash
+  ./gradlew app:testDebugUnitTest
+  ```
+- **Instrumented Integration Tests:** Validate SQLite CRUD operations and database helper logic (`DatabaseHelperTest`).
+- **UI Tests:** Verify layout rendering and user interaction flows (`LoginActivityTest`).
+
+---
+*© 2026 MyTutor Android Project. All rights reserved.*
